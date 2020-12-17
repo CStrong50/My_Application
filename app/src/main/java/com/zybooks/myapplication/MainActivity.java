@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -64,10 +65,23 @@ public class MainActivity extends AppCompatActivity {
         //find view spinner so we can work with it
         spinnerAudio = findViewById(R.id.spinner1);
 
-        File file = new File(getApplicationContext().getFilesDir().getAbsolutePath());
+        File file = new File(getExternalCacheDir().getAbsolutePath());
         //make sure to do file directory and not fileName
         //returns arraylist not objects
         File[] fileLists= file.listFiles();
+
+        // we are getting the file absolute path
+        //it's not being saved to the right place
+        Log.d("OnCreate", file.getAbsolutePath());
+
+        // no file exists
+        //its looking to the "files" but that's not where they are saving.
+        // They are getting put in externel cache directory
+        //should be 3 we're getting 4096
+        Log.d("OnCreate", String.valueOf(fileLists.length));
+
+
+
 
         //create array list
 
@@ -81,19 +95,26 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        //this is what gets pasted in
+        //this is what gets passed in
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, filesNames);
+        Log.d("OnCreate", filesNames.get(0));
 
         //creates dropdown menu
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerAudio.setAdapter(adapter);
-        spinnerAudio.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        //errors that setOnItemClick can't be used with Spinner
+       spinnerAudio.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemClick(AdapterView< ? > parent, View view, int position, long id) {
+            public void onItemSelected(AdapterView< ? > parent, View view, int position, long id) {
                 //get name of the file in that position
                 fileName = parent.getItemAtPosition(position).toString();
                 //might cause an error
                 currentOutputFile = new File(getApplicationContext().getFilesDir(), fileName);
+
+            }
+            @Override
+           public void onNothingSelected(AdapterView<?> parent){
+
             }
         });
 
@@ -126,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
                      if (checkPermissionFromDevice()) {
 
 
+                         //need to change the path to be "files"
                          fileName = getExternalCacheDir().getAbsolutePath()
                                   + dateFormatter.format(Calendar.getInstance().getTime())+
                                  ".3gp";
