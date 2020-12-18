@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -35,8 +36,8 @@ public class MainActivity extends AppCompatActivity {
     Button buttonPlayback, buttonStopPlayback;
     Button buttonDelete;
 
-    //where the recording will be saved
-    //String pathSave = "";
+
+
     private DateFormat dateFormatter;
 
     //media player
@@ -70,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         //returns arraylist not objects
         File[] fileLists= file.listFiles();
 
-        // we are getting the file absolute path
+        /*// we are getting the file absolute path
         //it's not being saved to the right place
         Log.d("OnCreate", file.getAbsolutePath());
 
@@ -78,13 +79,11 @@ public class MainActivity extends AppCompatActivity {
         //its looking to the "files" but that's not where they are saving.
         // They are getting put in externel cache directory
         //should be 3 we're getting 4096
-        Log.d("OnCreate", String.valueOf(fileLists.length));
-
+        Log.d("OnCreate", String.valueOf(fileLists.length));*/
 
 
 
         //create array list
-
         filesNames = new ArrayList<>();
 
         //wants just the file not the file names
@@ -148,8 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                          //need to change the path to be "files"
-                         fileName = getExternalCacheDir().getAbsolutePath()
-                                  + dateFormatter.format(Calendar.getInstance().getTime())+
+                         fileName =  dateFormatter.format(Calendar.getInstance().getTime())+
                                  ".3gp";
                          setupMediaRecorder();
                          try {
@@ -183,7 +181,10 @@ public class MainActivity extends AppCompatActivity {
                      buttonPlayback.setEnabled(true);
                      buttonRecord.setEnabled(true);
                      buttonStopPlayback.setEnabled(false);
+                     filesNames.add(currentOutputFile.getName());
+                     upDateList();
                  }
+
              });
              buttonPlayback.setOnClickListener(new View.OnClickListener() {
                  @Override
@@ -195,7 +196,8 @@ public class MainActivity extends AppCompatActivity {
                      myMediaPlayer = new MediaPlayer();
                      try {
 
-                             myMediaPlayer.setDataSource(fileName);
+                         //get direct path
+                         myMediaPlayer.setDataSource(currentOutputFile.getAbsolutePath());
                              myMediaPlayer.prepare();
 
                      }catch (IOException e){
@@ -227,20 +229,42 @@ public class MainActivity extends AppCompatActivity {
              buttonDelete.setOnClickListener(new View.OnClickListener() {
                  @Override
                  public void onClick(View v) {
+                     currentOutputFile.delete();
 
+                     File file = new File(getExternalCacheDir().getAbsolutePath());
+                     File[] fileLists= file.listFiles();
+
+                     filesNames = new ArrayList<>();
+
+                     //wants just the file not the file names
+                     assert fileLists != null;
+                     if (fileLists.length != 0){
+                         for (File name : fileLists){
+                             filesNames.add(name.getName());
+                         }
+                     }
+                     upDateList();
                  }
              });
 
     }
 
+    private void upDateList(){
+        //updates spinner list
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
+                filesNames);
+        spinnerAudio.setAdapter(adapter);
+    }
+
     private void setupMediaRecorder() {
         //fileName = getCacheDir()
+        currentOutputFile = new File(getApplicationContext().getFilesDir(),fileName);
 
         myMediaRecorder = new MediaRecorder();
         myMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         myMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         myMediaRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
-        myMediaRecorder.setOutputFile(fileName);
+        myMediaRecorder.setOutputFile(currentOutputFile);
     }
 
     private void requestPermission() {
